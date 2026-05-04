@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa Interativo - Usuário</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #map { height: 100vh; display: none; }
+        #telaInicial { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #btnLocalizar { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="telaInicial">
+        <h2>Mapa Interativo - Usuário</h2>
+        <button id="btnLocalizar">📍 Localizar-me</button>
+    </div>
+
+    <div id="infoModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeModal" class="modal-close">×</button>
+            <div id="modalSlider" class="modal-slider hidden">
+                <button id="sliderPrev" type="button" class="slider-button">‹</button>
+                <div class="slider-frame">
+                    <img id="sliderImage" src="" alt="Foto do local">
+                    <div id="sliderCaption" class="slider-caption"></div>
+                </div>
+                <button id="sliderNext" type="button" class="slider-button">›</button>
+            </div>
+            <div id="sliderCounter" class="slider-counter"></div>
+            <h3 id="modalTitle"></h3>
+            <p id="modalDescription"></p>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>window.USER_MODE = 'viewer';</script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
