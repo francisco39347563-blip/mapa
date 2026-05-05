@@ -571,8 +571,29 @@ async function drawRoute(start, end) {
             alert('Rota a pé encontrada pelas vias internas, mas o ponto final está fora da malha de caminhos. Posicione o marcador mais próximo de uma via.');
         }
     } catch (error) {
-        console.error('Erro ao traçar rota:', error);
-        alert('Não foi possível traçar a rota: ' + error.message);
+        console.error('Erro ao traçar rota ORS:', error);
+        clearRoute();
+        routeLayer = L.layerGroup().addTo(map);
+        L.polyline(
+            [[start.lat, start.lng], [end.lat, end.lng]],
+            { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }
+        ).addTo(routeLayer);
+
+        routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
+            radius: 7,
+            color: '#0b5ed7',
+            fillColor: '#0b5ed7',
+            fillOpacity: 0.9,
+            weight: 2
+        }).addTo(map);
+        routeDestinationMarker.bindPopup('Destino selecionado');
+
+        const bounds = L.latLngBounds([[start.lat, start.lng], [end.lat, end.lng]]);
+        bounds.extend([start.lat, start.lng]);
+        bounds.extend([end.lat, end.lng]);
+        map.fitBounds(bounds, { padding: [40, 40] });
+
+        alert('Não foi possível traçar a rota pelo ORS. Exibindo linha reta entre a posição atual e o destino.');
     }
 }
 
@@ -623,7 +644,7 @@ async function routeToCoordinates(lat, lng, name) {
     drawRoute(origin, { lat: parsedLat, lng: parsedLng });
 }
 
-async function routeToMarker(markerId, name) {
+async function routeToMarker(markerId, name, fallbackLat, fallbackLng) {
     let origin;
     try {
         origin = await getCurrentUserLocation();
@@ -636,6 +657,11 @@ async function routeToMarker(markerId, name) {
 
     const marker = await getMarkerById(markerId);
     if (!marker) {
+        console.warn('Não foi possível obter o marcador via API; usando as coordenadas do link como fallback.');
+        if (Number.isFinite(fallbackLat) && Number.isFinite(fallbackLng)) {
+            drawRoute(origin, { lat: fallbackLat, lng: fallbackLng });
+            return;
+        }
         alert('Não foi possível obter o ponto no banco de dados.');
         return;
     }
@@ -643,6 +669,11 @@ async function routeToMarker(markerId, name) {
     const destinationLat = Number(marker.latitude);
     const destinationLng = Number(marker.longitude);
     if (!Number.isFinite(destinationLat) || !Number.isFinite(destinationLng)) {
+        console.warn('Coordenadas do marcador inválidas; usando coordenadas do link como fallback.');
+        if (Number.isFinite(fallbackLat) && Number.isFinite(fallbackLng)) {
+            drawRoute(origin, { lat: fallbackLat, lng: fallbackLng });
+            return;
+        }
         alert('O marcador selecionado não possui coordenadas válidas.');
         return;
     }
@@ -712,7 +743,7 @@ document.addEventListener('click', function(event) {
         const lng = parseFloat(event.target.dataset.lng);
         const markerId = parseInt(event.target.dataset.id, 10);
         if (!isNaN(markerId)) {
-            routeToMarker(markerId, event.target.dataset.name || 'Destino');
+            routeToMarker(markerId, event.target.dataset.name || 'Destino', lat, lng);
         } else if (!isNaN(lat) && !isNaN(lng)) {
             routeToCoordinates(lat, lng, event.target.dataset.name || 'Destino');
         } else {
