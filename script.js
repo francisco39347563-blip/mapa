@@ -541,7 +541,7 @@ async function drawRoute(start, end) {
 
         clearRoute();
         routeLayer = L.layerGroup().addTo(map);
-        L.polyline(walkingCoords, { color: '#007bff', weight: 5, opacity: 0.85 }).addTo(routeLayer);
+        L.polyline(walkingCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
         if (distanceToDestination > 25) {
             L.polyline(
                 [[lastCoord[0], lastCoord[1]], [end.lat, end.lng]],
@@ -610,12 +610,10 @@ async function routeToCoordinates(lat, lng, name) {
         return;
     }
 
-    let origin = userCoords;
+    let origin;
     try {
-        if (!origin) {
-            origin = await getCurrentUserLocation();
-            userCoords = origin;
-        }
+        origin = await getCurrentUserLocation();
+        userCoords = origin;
     } catch (error) {
         console.error('Erro ao obter localização do usuário:', error);
         alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
@@ -626,12 +624,10 @@ async function routeToCoordinates(lat, lng, name) {
 }
 
 async function routeToMarker(markerId, name) {
-    let origin = userCoords;
+    let origin;
     try {
-        if (!origin) {
-            origin = await getCurrentUserLocation();
-            userCoords = origin;
-        }
+        origin = await getCurrentUserLocation();
+        userCoords = origin;
     } catch (error) {
         console.error('Erro ao obter localização do usuário:', error);
         alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
