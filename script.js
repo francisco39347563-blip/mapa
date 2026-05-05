@@ -2,9 +2,6 @@
 const USER_MODE = window.USER_MODE || 'viewer';
 const isAdmin = USER_MODE === 'admin';
 
-// Chave OpenRouteService (substitua pela sua)
-const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNjZTliZjQ1ODFhOTQwNDI5YmMxMmViZDgzZDEzMzYwIiwiaCI6Im11cm11cjY0In0=';
-
 // 📍 INPE - coordenadas fixas
  const inpeCoords = [-23.2076, -45.8581];
 
@@ -466,135 +463,30 @@ function openCategoryPrompt(latlng) {
     openMarkerFormModal();
 }
 
-async function fetchWalkingRoute(start, end) {
-    const profiles = ['foot-walking', 'foot-hiking'];
-    let lastError = null;
-
-    for (const profile of profiles) {
-        const url = `https://api.openrouteservice.org/v2/directions/${profile}/geojson`;
-        console.log(`Tentando rota ORS profile: ${profile}`);
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': ORS_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                coordinates: [
-                    [start.lng, start.lat],
-                    [end.lng, end.lat]
-                ],
-                instructions: false,
-                geometry_simplify: false
-            })
-        });
-
-        if (!response.ok) {
-            let errorMessage = response.statusText;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.error?.message || errorData.error || errorMessage;
-            } catch (parseError) {
-                // Mantém statusText quando não houver payload JSON.
-            }
-            lastError = new Error(`${profile}: ${errorMessage}`);
-            console.warn(lastError.message);
-            continue;
-        }
-
-        const data = await response.json();
-        if (!data?.features?.length || !data.features[0]?.geometry?.coordinates?.length) {
-            lastError = new Error(`${profile}: nenhuma rota retornada pelo serviço.`);
-            console.warn(lastError.message);
-            continue;
-        }
-
-        const coords = data.features[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
-        if (coords.length === 0) {
-            lastError = new Error(`${profile}: rota de caminhada vazia.`);
-            console.warn(lastError.message);
-            continue;
-        }
-
-        console.log(`Rota encontrada com profile: ${profile}`);
-        return coords;
-    }
-
-    const message = lastError ? lastError.message : 'Nenhum perfil de rota retornou caminho.';
-    throw new Error(`Falha na rota ORS: ${message}`);
-}
-
 async function drawRoute(start, end) {
-    if (!ORS_API_KEY || ORS_API_KEY === 'SUA_CHAVE_AQUI') {
-        alert('Substitua ORS_API_KEY pela sua chave do OpenRouteService.');
-        return;
-    }
+    clearRoute();
+    routeLayer = L.layerGroup().addTo(map);
 
-    try {
-        let walkingCoords = await fetchWalkingRoute(start, end);
-        const lastCoord = walkingCoords[walkingCoords.length - 1];
-        const distanceToDestination = getDistanceMeters(
-            { lat: lastCoord[0], lng: lastCoord[1] },
-            end
-        );
+    const routeCoords = [
+        [start.lat, start.lng],
+        [end.lat, end.lng]
+    ];
 
-        clearRoute();
-        routeLayer = L.layerGroup().addTo(map);
-        L.polyline(walkingCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
-        if (distanceToDestination > 25) {
-            L.polyline(
-                [[lastCoord[0], lastCoord[1]], [end.lat, end.lng]],
-                { color: '#00a86b', weight: 4, opacity: 0.9, dashArray: '6,8' }
-            ).addTo(routeLayer);
-        }
+    L.polyline(routeCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
 
-        routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
-            radius: 7,
-            color: '#0b5ed7',
-            fillColor: '#0b5ed7',
-            fillOpacity: 0.9,
-            weight: 2
-        }).addTo(map);
-        routeDestinationMarker.bindPopup('Destino selecionado');
+    routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
+        radius: 7,
+        color: '#0b5ed7',
+        fillColor: '#0b5ed7',
+        fillOpacity: 0.9,
+        weight: 2
+    }).addTo(map);
+    routeDestinationMarker.bindPopup('Destino selecionado');
 
-        const bounds = L.latLngBounds([walkingCoords[0], walkingCoords[walkingCoords.length - 1]]);
-        walkingCoords.forEach((coord) => bounds.extend(coord));
-        if (distanceToDestination > 25) {
-            bounds.extend([end.lat, end.lng]);
-        }
-        bounds.extend([start.lat, start.lng]);
-        bounds.extend([end.lat, end.lng]);
-        map.fitBounds(bounds, { padding: [40, 40] });
-
-        if (distanceToDestination > 25) {
-            alert('Rota a pé encontrada pelas vias internas, mas o ponto final está fora da malha de caminhos. Posicione o marcador mais próximo de uma via.');
-        }
-    } catch (error) {
-        console.error('Erro ao traçar rota ORS:', error);
-        clearRoute();
-        routeLayer = L.layerGroup().addTo(map);
-        L.polyline(
-            [[start.lat, start.lng], [end.lat, end.lng]],
-            { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }
-        ).addTo(routeLayer);
-
-        routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
-            radius: 7,
-            color: '#0b5ed7',
-            fillColor: '#0b5ed7',
-            fillOpacity: 0.9,
-            weight: 2
-        }).addTo(map);
-        routeDestinationMarker.bindPopup('Destino selecionado');
-
-        const bounds = L.latLngBounds([[start.lat, start.lng], [end.lat, end.lng]]);
-        bounds.extend([start.lat, start.lng]);
-        bounds.extend([end.lat, end.lng]);
-        map.fitBounds(bounds, { padding: [40, 40] });
-
-        alert('Não foi possível traçar a rota pelo ORS. Exibindo linha reta entre a posição atual e o destino.');
-    }
+    const bounds = L.latLngBounds(routeCoords);
+    bounds.extend([start.lat, start.lng]);
+    bounds.extend([end.lat, end.lng]);
+    map.fitBounds(bounds, { padding: [40, 40] });
 }
 
 async function getMarkerById(markerId) {
@@ -631,28 +523,32 @@ async function routeToCoordinates(lat, lng, name) {
         return;
     }
 
-    let origin;
-    try {
-        origin = await getCurrentUserLocation();
-        userCoords = origin;
-    } catch (error) {
-        console.error('Erro ao obter localização do usuário:', error);
-        alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
-        return;
+    let origin = userCoords;
+    if (!origin) {
+        try {
+            origin = await getCurrentUserLocation();
+            userCoords = origin;
+        } catch (error) {
+            console.error('Erro ao obter localização do usuário:', error);
+            alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
+            return;
+        }
     }
 
     drawRoute(origin, { lat: parsedLat, lng: parsedLng });
 }
 
 async function routeToMarker(markerId, name, fallbackLat, fallbackLng) {
-    let origin;
-    try {
-        origin = await getCurrentUserLocation();
-        userCoords = origin;
-    } catch (error) {
-        console.error('Erro ao obter localização do usuário:', error);
-        alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
-        return;
+    let origin = userCoords;
+    if (!origin) {
+        try {
+            origin = await getCurrentUserLocation();
+            userCoords = origin;
+        } catch (error) {
+            console.error('Erro ao obter localização do usuário:', error);
+            alert('Não foi possível obter sua localização atual. Verifique as permissões do navegador.');
+            return;
+        }
     }
 
     const marker = await getMarkerById(markerId);
@@ -737,15 +633,16 @@ document.addEventListener('click', function(event) {
         openModal(nome, descricao, photos);
     }
 
-    if (event.target.matches('.route-to')) {
+    const routeLink = event.target.closest('.route-to');
+    if (routeLink) {
         event.preventDefault();
-        const lat = parseFloat(event.target.dataset.lat);
-        const lng = parseFloat(event.target.dataset.lng);
-        const markerId = parseInt(event.target.dataset.id, 10);
+        const lat = parseFloat(routeLink.dataset.lat);
+        const lng = parseFloat(routeLink.dataset.lng);
+        const markerId = parseInt(routeLink.dataset.id, 10);
         if (!isNaN(markerId)) {
-            routeToMarker(markerId, event.target.dataset.name || 'Destino', lat, lng);
+            routeToMarker(markerId, routeLink.dataset.name || 'Destino', lat, lng);
         } else if (!isNaN(lat) && !isNaN(lng)) {
-            routeToCoordinates(lat, lng, event.target.dataset.name || 'Destino');
+            routeToCoordinates(lat, lng, routeLink.dataset.name || 'Destino');
         } else {
             alert('Não foi possível identificar o destino da rota.');
         }
