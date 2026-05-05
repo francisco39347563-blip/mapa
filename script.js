@@ -10,6 +10,7 @@ const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNjZTl
 
 // Elementos HTML
 const btn = document.getElementById("btnLocalizar");
+const btnCentralizar = document.getElementById("btnCentralizar");
 const telaInicial = document.getElementById("telaInicial");
 const mapDiv = document.getElementById("map");
 const infoModal = document.getElementById("infoModal");
@@ -770,6 +771,14 @@ function iniciarMapa(lat, lng) {
 
     // Atualizar posição do usuário em tempo real
     if (navigator.geolocation) {
+        if (btnCentralizar) {
+            btnCentralizar.addEventListener('click', () => {
+                if (userCoords && map) {
+                    map.setView([userCoords.lat, userCoords.lng], map.getZoom());
+                }
+            });
+        }
+
         navigator.geolocation.watchPosition(
             (position) => {
                 const lat = position.coords.latitude;
@@ -785,16 +794,7 @@ function iniciarMapa(lat, lng) {
                 }
                 userCoords = { lat, lng };
 
-                // Círculo de precisão
-                L.circle([lat, lng], {
-                    radius: position.coords.accuracy,
-                    color: 'blue',
-                    fillColor: 'blue',
-                    fillOpacity: 0.2
-                }).addTo(map);
-
-                // Seguir usuário
-                map.setView([lat, lng]);
+                // Não reposicionar o mapa automaticamente para permitir navegação do usuário.
             },
             (error) => console.log("Erro de localização:", error),
             { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
