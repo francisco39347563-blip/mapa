@@ -36,6 +36,8 @@ let userMarker = null;
 let userCoords = null;
 let routeLayer = null;
 let routeDestinationMarker = null;
+let currentRouteDestination = null;
+const ARRIVAL_DISTANCE_METERS = 20;
 let pendingMarkerData = null;
 let selectedFiles = [];
 let modalPhotos = [];
@@ -345,7 +347,8 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
-function clearRoute() {
+function clearRoute(options = {}) {
+    const { keepDestination = false } = options;
     if (routeLayer) {
         map.removeLayer(routeLayer);
         routeLayer = null;
@@ -353,6 +356,9 @@ function clearRoute() {
     if (routeDestinationMarker) {
         map.removeLayer(routeDestinationMarker);
         routeDestinationMarker = null;
+    }
+    if (!keepDestination) {
+        currentRouteDestination = null;
     }
 }
 
@@ -464,6 +470,7 @@ function openCategoryPrompt(latlng) {
 }
 
 async function drawRoute(start, end) {
+    currentRouteDestination = end;
     clearRoute();
     routeLayer = L.layerGroup().addTo(map);
 
@@ -487,6 +494,28 @@ async function drawRoute(start, end) {
     bounds.extend([start.lat, start.lng]);
     bounds.extend([end.lat, end.lng]);
     map.fitBounds(bounds, { padding: [40, 40] });
+}
+
+function refreshRouteLine(start, end) {
+    if (!currentRouteDestination) return;
+    clearRoute({ keepDestination: true });
+    routeLayer = L.layerGroup().addTo(map);
+
+    const routeCoords = [
+        [start.lat, start.lng],
+        [end.lat, end.lng]
+    ];
+
+    L.polyline(routeCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
+
+    routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
+        radius: 7,
+        color: '#0b5ed7',
+        fillColor: '#0b5ed7',
+        fillOpacity: 0.9,
+        weight: 2
+    }).addTo(map);
+    routeDestinationMarker.bindPopup('Destino selecionado');
 }
 
 async function getMarkerById(markerId) {
@@ -717,6 +746,16 @@ function iniciarMapa(lat, lng) {
                     userMarker.setLatLng([lat, lng]);
                 }
                 userCoords = { lat, lng };
+
+                if (currentRouteDestination) {
+                    const distanceToDestination = getDistanceMeters(userCoords, currentRouteDestination);
+                    if (distanceToDestination <= ARRIVAL_DISTANCE_METERS) {
+                        clearRoute();
+                        alert('Você chegou ao destino!');
+                    } else {
+                        refreshRouteLine(userCoords, currentRouteDestination);
+                    }
+                }
 
                 // Não reposicionar o mapa automaticamente para permitir navegação do usuário.
             },
