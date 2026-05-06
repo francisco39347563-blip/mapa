@@ -35,6 +35,7 @@ let map;          // mapa global
 let userMarker = null;
 let userCoords = null;
 let routeLayer = null;
+let routeLine = null;
 let routeDestinationMarker = null;
 let currentRouteDestination = null;
 const ARRIVAL_DISTANCE_METERS = 20;
@@ -353,6 +354,10 @@ function clearRoute(options = {}) {
         map.removeLayer(routeLayer);
         routeLayer = null;
     }
+    if (routeLine) {
+        map.removeLayer(routeLine);
+        routeLine = null;
+    }
     if (routeDestinationMarker) {
         map.removeLayer(routeDestinationMarker);
         routeDestinationMarker = null;
@@ -472,14 +477,13 @@ function openCategoryPrompt(latlng) {
 async function drawRoute(start, end) {
     currentRouteDestination = end;
     clearRoute();
-    routeLayer = L.layerGroup().addTo(map);
 
     const routeCoords = [
         [start.lat, start.lng],
         [end.lat, end.lng]
     ];
 
-    L.polyline(routeCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
+    routeLine = L.polyline(routeCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(map);
 
     routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
         radius: 7,
@@ -497,25 +501,26 @@ async function drawRoute(start, end) {
 }
 
 function refreshRouteLine(start, end) {
-    if (!currentRouteDestination) return;
-    clearRoute({ keepDestination: true });
-    routeLayer = L.layerGroup().addTo(map);
+    if (!currentRouteDestination || !routeLine) return;
 
     const routeCoords = [
         [start.lat, start.lng],
         [end.lat, end.lng]
     ];
 
-    L.polyline(routeCoords, { color: '#007bff', weight: 5, opacity: 0.85, dashArray: '10,10' }).addTo(routeLayer);
-
-    routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
-        radius: 7,
-        color: '#0b5ed7',
-        fillColor: '#0b5ed7',
-        fillOpacity: 0.9,
-        weight: 2
-    }).addTo(map);
-    routeDestinationMarker.bindPopup('Destino selecionado');
+    routeLine.setLatLngs(routeCoords);
+    if (routeDestinationMarker) {
+        routeDestinationMarker.setLatLng([end.lat, end.lng]);
+    } else {
+        routeDestinationMarker = L.circleMarker([end.lat, end.lng], {
+            radius: 7,
+            color: '#0b5ed7',
+            fillColor: '#0b5ed7',
+            fillOpacity: 0.9,
+            weight: 2
+        }).addTo(map);
+        routeDestinationMarker.bindPopup('Destino selecionado');
+    }
 }
 
 async function getMarkerById(markerId) {
