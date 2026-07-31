@@ -7,6 +7,7 @@ const isAdmin = USER_MODE === 'admin';
 
 // Elementos HTML
 const btn = document.getElementById("btnLocalizar");
+const btnAbrirMapa = document.getElementById("btnAbrirMapa");
 const btnCentralizar = document.getElementById("btnCentralizar");
 const telaInicial = document.getElementById("telaInicial");
 const mapDiv = document.getElementById("map");
@@ -809,24 +810,42 @@ document.addEventListener('click', function(event) {
 
 // Quando clicar em "Localizar-me"
 btn.addEventListener("click", () => {
+    btn.disabled = true;
+    btn.textContent = 'Buscando localização...';
+
+    const handleError = () => {
+        btn.disabled = false;
+        btn.textContent = '📍 Localizar-me';
+        alert('Não foi possível obter localização. Abrindo mapa padrão.');
+        iniciarMapa(inpeCoords[0], inpeCoords[1]);
+    };
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                btn.disabled = false;
+                btn.textContent = '📍 Localizar-me';
                 iniciarMapa(position.coords.latitude, position.coords.longitude);
             },
-            () => {
-                alert("Não foi possível obter localização. Usando INPE.");
-                iniciarMapa(inpeCoords[0], inpeCoords[1]);
-            },
+            handleError,
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
-    } else {
-        alert("Geolocalização não suportada. Usando INPE.");
-        iniciarMapa(inpeCoords[0], inpeCoords[1]);
-    }
 
+        setTimeout(() => {
+            if (btn.disabled) {
+                handleError();
+            }
+        }, 12000);
+    } else {
+        handleError();
+    }
 });
+
+if (btnAbrirMapa) {
+    btnAbrirMapa.addEventListener('click', () => {
+        iniciarMapa(inpeCoords[0], inpeCoords[1]);
+    });
+}
 
 // Função para iniciar o mapa
 function iniciarMapa(lat, lng) {

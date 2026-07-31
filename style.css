@@ -32,6 +32,13 @@ h2 {
     background: white;
     color: #4facfe;
     transition: 0.3s;
+    margin: 10px 0 0;
+    width: min(260px, 100%);
+}
+
+.secondary-button {
+    background: #e7f1ff;
+    color: #0f4db0;
 }
 
 #telaInicial button:hover {
