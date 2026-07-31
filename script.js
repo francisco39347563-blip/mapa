@@ -7,7 +7,6 @@ const isAdmin = USER_MODE === 'admin';
 
 // Elementos HTML
 const btn = document.getElementById("btnLocalizar");
-const btnAbrirMapa = document.getElementById("btnAbrirMapa");
 const btnCentralizar = document.getElementById("btnCentralizar");
 const telaInicial = document.getElementById("telaInicial");
 const mapDiv = document.getElementById("map");
@@ -18,10 +17,8 @@ const modalSlider = document.getElementById("modalSlider");
 const sliderPrev = document.getElementById("sliderPrev");
 const sliderNext = document.getElementById("sliderNext");
 const sliderImage = document.getElementById("sliderImage");
-const sliderCaption = document.getElementById("sliderCaption");
 const sliderCounter = document.getElementById("sliderCounter");
 const closeModalButton = document.getElementById("closeModal");
-const closeModalFooterButton = document.getElementById("closeModalFooter");
 const imageViewer = document.getElementById("imageViewer");
 const closeViewerButton = document.getElementById("closeViewer");
 const viewerImage = document.getElementById("viewerImage");
@@ -730,7 +727,7 @@ function renderModalSlider() {
     modalSlider.classList.remove('hidden');
     const photo = modalPhotos[modalPhotoIndex];
     sliderImage.src = photo.referencia;
-    sliderImage.alt = photo.referencia.split('/').pop() || 'Imagem do local';
+    sliderImage.alt = `Foto de ${modalTitle.textContent}`;
     sliderCounter.textContent = `Imagem ${modalPhotoIndex + 1} de ${modalPhotos.length}`;
 }
 
@@ -761,24 +758,26 @@ sliderNext.addEventListener('click', () => {
 });
 
 closeModalButton.addEventListener('click', closeModal);
-closeModalFooterButton.addEventListener('click', closeModal);
+infoModal.addEventListener('click', function(event) {
+    if (event.target === infoModal) {
+        closeModal();
+    }
+});
+
 sliderImage.addEventListener('click', () => {
     if (!sliderImage.src) return;
     viewerImage.src = sliderImage.src;
     viewerImage.alt = sliderImage.alt;
     imageViewer.classList.remove('hidden');
 });
+
 closeViewerButton.addEventListener('click', () => {
     imageViewer.classList.add('hidden');
 });
+
 imageViewer.addEventListener('click', function(event) {
     if (event.target === imageViewer) {
         imageViewer.classList.add('hidden');
-    }
-});
-infoModal.addEventListener('click', function(event) {
-    if (event.target === infoModal) {
-        closeModal();
     }
 });
 
@@ -787,7 +786,9 @@ document.addEventListener('click', function(event) {
         event.preventDefault();
         const nome = event.target.dataset.name || '';
         const descricao = event.target.dataset.descricao || '';
-        const photos = event.target.dataset.photos ? JSON.parse(decodeURIComponent(event.target.dataset.photos)) : [];
+        const photos = event.target.dataset.photos
+            ? JSON.parse(decodeURIComponent(event.target.dataset.photos))
+            : [];
         openModal(nome, descricao, photos);
     }
 
@@ -840,12 +841,6 @@ btn.addEventListener("click", () => {
         handleError();
     }
 });
-
-if (btnAbrirMapa) {
-    btnAbrirMapa.addEventListener('click', () => {
-        iniciarMapa(inpeCoords[0], inpeCoords[1]);
-    });
-}
 
 // Função para iniciar o mapa
 function iniciarMapa(lat, lng) {

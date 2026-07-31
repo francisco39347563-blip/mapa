@@ -36,11 +36,6 @@ h2 {
     width: min(260px, 100%);
 }
 
-.secondary-button {
-    background: #e7f1ff;
-    color: #0f4db0;
-}
-
 #telaInicial button:hover {
     background: #eee;
 }
@@ -158,70 +153,10 @@ h2 {
 
 #modalDescription {
     margin: 0;
-    padding: 18px 20px;
-    border-radius: 18px;
-    background: #eef5ff;
-    border: 1px solid #dfeafd;
-    color: #1a2d48;
-    line-height: 1.8;
+    color: #333;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
-}
-
-.modal-footer-close {
-    width: 100%;
-    padding: 14px 18px;
-    border: none;
-    border-radius: 14px;
-    background: #4facfe;
-    color: white;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.modal-footer-close:hover {
-    background: #3d98e8;
-}
-
-.modal-footer-close:active {
-    transform: translateY(1px);
-}
-
-@media (max-width: 640px) {
-    .modal {
-        padding: 10px;
-    }
-
-    .modal-content {
-        width: calc(100% - 20px);
-        padding: 18px;
-        max-height: calc(100vh - 20px);
-        gap: 16px;
-    }
-
-    .modal-close {
-        width: 48px;
-        height: 48px;
-        right: 12px;
-        top: 12px;
-    }
-
-    .slider-button {
-        width: 42px;
-        height: 42px;
-        font-size: 24px;
-    }
-
-    .slider-frame {
-        max-width: 100%;
-    }
-
-    .modal-footer-close {
-        padding: 16px 20px;
-        font-size: 1rem;
-    }
 }
 
 .modal-slider {
@@ -264,7 +199,7 @@ h2 {
 }
 
 .slider-frame:hover {
-    cursor: zoom-in;
+    cursor: pointer;
 }
 
 .slider-frame img {
@@ -272,15 +207,6 @@ h2 {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s ease;
-}
-
-.slider-frame:hover img {
-    transform: scale(1.02);
-}
-
-.slider-caption {
-    display: none;
 }
 
 .slider-counter {
@@ -293,12 +219,12 @@ h2 {
 .image-viewer {
     position: fixed;
     inset: 0;
+    background: rgba(0, 0, 0, 0.84);
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.88);
-    z-index: 2500;
+    align-items: center;
     padding: 20px;
+    z-index: 3000;
 }
 
 .image-viewer.hidden {
@@ -307,35 +233,48 @@ h2 {
 
 .image-viewer-content {
     position: relative;
-    max-width: 92vw;
+    width: min(100%, 900px);
     max-height: 92vh;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.image-viewer-content img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 20px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+.image-viewer img {
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    object-fit: contain;
+    display: block;
 }
 
 .viewer-close {
     position: absolute;
-    top: -12px;
-    right: -12px;
-    width: 40px;
-    height: 40px;
+    top: -10px;
+    right: -10px;
+    width: 44px;
+    height: 44px;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
+    background: white;
     color: #111;
     font-size: 24px;
     cursor: pointer;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
 }
+
+@media (max-width: 640px) {
+    .modal-close {
+        width: 48px;
+        height: 48px;
+        right: 12px;
+        top: 12px;
+    }
+
+    .slider-button {
+        width: 42px;
+        height: 42px;
+        font-size: 24px;
+    }
+}
+
 
 .upload-zone {
     border: 2px dashed #99c1ff;
