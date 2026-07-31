@@ -20,6 +20,10 @@ const sliderImage = document.getElementById("sliderImage");
 const sliderCaption = document.getElementById("sliderCaption");
 const sliderCounter = document.getElementById("sliderCounter");
 const closeModalButton = document.getElementById("closeModal");
+const closeModalFooterButton = document.getElementById("closeModalFooter");
+const imageViewer = document.getElementById("imageViewer");
+const closeViewerButton = document.getElementById("closeViewer");
+const viewerImage = document.getElementById("viewerImage");
 
 const markerFormModal = document.getElementById("markerFormModal");
 const markerForm = document.getElementById("markerForm");
@@ -740,6 +744,7 @@ function openModal(nome, descricao, photos = []) {
 
 function closeModal() {
     infoModal.classList.add('hidden');
+    imageViewer.classList.add('hidden');
 }
 
 sliderPrev.addEventListener('click', () => {
@@ -755,6 +760,21 @@ sliderNext.addEventListener('click', () => {
 });
 
 closeModalButton.addEventListener('click', closeModal);
+closeModalFooterButton.addEventListener('click', closeModal);
+sliderImage.addEventListener('click', () => {
+    if (!sliderImage.src) return;
+    viewerImage.src = sliderImage.src;
+    viewerImage.alt = sliderImage.alt;
+    imageViewer.classList.remove('hidden');
+});
+closeViewerButton.addEventListener('click', () => {
+    imageViewer.classList.add('hidden');
+});
+imageViewer.addEventListener('click', function(event) {
+    if (event.target === imageViewer) {
+        imageViewer.classList.add('hidden');
+    }
+});
 infoModal.addEventListener('click', function(event) {
     if (event.target === infoModal) {
         closeModal();
