@@ -158,6 +158,62 @@ const museumIcon = L.divIcon({
     iconAnchor: [17, 33]
 });
 
+const musicIcon = L.divIcon({
+    className: 'category-div-icon category-music',
+    html: '🎵',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const toolIcon = L.divIcon({
+    className: 'category-div-icon category-tool',
+    html: '🛠️',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const energyIcon = L.divIcon({
+    className: 'category-div-icon category-energy',
+    html: '⚡',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const flameIcon = L.divIcon({
+    className: 'category-div-icon category-flame',
+    html: '🔥',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const gravityIcon = L.divIcon({
+    className: 'category-div-icon category-gravity',
+    html: '🌊',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const radioIcon = L.divIcon({
+    className: 'category-div-icon category-radio',
+    html: '📻',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const earthIcon = L.divIcon({
+    className: 'category-div-icon category-earth',
+    html: '🌍',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
+const mapIcon = L.divIcon({
+    className: 'category-div-icon category-map',
+    html: '🗺️',
+    iconSize: [34, 34],
+    iconAnchor: [17, 33]
+});
+
 const placeIcon = redIcon;
 const internalRouteIcon = L.divIcon({
     className: 'category-div-icon',
@@ -180,6 +236,14 @@ function getIconByCategory(category) {
         clima: climateIcon,
         museu: museumIcon,
         carro: carIcon,
+        musica: musicIcon,
+        ferramenta: toolIcon,
+        energia: energyIcon,
+        chama: flameIcon,
+        ondas_gravitacionais: gravityIcon,
+        radio: radioIcon,
+        terra: earthIcon,
+        mapa: mapIcon,
         rota_interna: internalRouteIcon
     };
     return icons[category] || placeIcon;
@@ -403,8 +467,16 @@ function openCategoryPrompt(latlng) {
         "10 - Clima\n" +
         "11 - Museu\n" +
         "12 - Carro\n" +
-        "13 - Outro\n" +
-        "Digite 1 a 13:"
+        "13 - Música\n" +
+        "14 - Ferramenta\n" +
+        "15 - Energia\n" +
+        "16 - Chama\n" +
+        "17 - Ondas gravitacionais\n" +
+        "18 - Rádio\n" +
+        "19 - Planeta Terra\n" +
+        "20 - Mapa\n" +
+        "21 - Outro\n" +
+        "Digite 1 a 21:"
     );
 
     let iconSelecionado;
@@ -458,6 +530,38 @@ function openCategoryPrompt(latlng) {
         iconSelecionado = carIcon;
         categoriaTexto = 'Carro';
         categoriaValue = 'carro';
+    } else if (categoria === '13') {
+        iconSelecionado = musicIcon;
+        categoriaTexto = 'Música';
+        categoriaValue = 'musica';
+    } else if (categoria === '14') {
+        iconSelecionado = toolIcon;
+        categoriaTexto = 'Ferramenta';
+        categoriaValue = 'ferramenta';
+    } else if (categoria === '15') {
+        iconSelecionado = energyIcon;
+        categoriaTexto = 'Energia';
+        categoriaValue = 'energia';
+    } else if (categoria === '16') {
+        iconSelecionado = flameIcon;
+        categoriaTexto = 'Chama';
+        categoriaValue = 'chama';
+    } else if (categoria === '17') {
+        iconSelecionado = gravityIcon;
+        categoriaTexto = 'Ondas gravitacionais';
+        categoriaValue = 'ondas_gravitacionais';
+    } else if (categoria === '18') {
+        iconSelecionado = radioIcon;
+        categoriaTexto = 'Rádio';
+        categoriaValue = 'radio';
+    } else if (categoria === '19') {
+        iconSelecionado = earthIcon;
+        categoriaTexto = 'Planeta Terra';
+        categoriaValue = 'terra';
+    } else if (categoria === '20') {
+        iconSelecionado = mapIcon;
+        categoriaTexto = 'Mapa';
+        categoriaValue = 'mapa';
     } else {
         iconSelecionado = placeIcon;
         categoriaTexto = 'Outro';
@@ -622,7 +726,6 @@ function renderModalSlider() {
     const photo = modalPhotos[modalPhotoIndex];
     sliderImage.src = photo.referencia;
     sliderImage.alt = photo.referencia.split('/').pop() || 'Imagem do local';
-    sliderCaption.textContent = photo.descricao || photo.referencia.split('/').pop();
     sliderCounter.textContent = `Imagem ${modalPhotoIndex + 1} de ${modalPhotos.length}`;
 }
 
