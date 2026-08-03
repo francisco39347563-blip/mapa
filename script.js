@@ -8,6 +8,7 @@ const isAdmin = USER_MODE === 'admin';
 // Elementos HTML
 const btn = document.getElementById("btnLocalizar");
 const btnCentralizar = document.getElementById("btnCentralizar");
+const btnCancelarRota = document.getElementById("btnCancelarRota");
 const telaInicial = document.getElementById("telaInicial");
 const mapDiv = document.getElementById("map");
 const infoModal = document.getElementById("infoModal");
@@ -728,6 +729,11 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
+function setCancelRouteButtonVisible(visible) {
+    if (!btnCancelarRota) return;
+    btnCancelarRota.classList.toggle('hidden', !visible);
+}
+
 function clearRoute(options = {}) {
     const { keepDestination = false } = options;
     if (routeLayer) {
@@ -744,6 +750,7 @@ function clearRoute(options = {}) {
     }
     if (!keepDestination) {
         currentRouteDestination = null;
+        setCancelRouteButtonVisible(false);
     }
 }
 
@@ -895,8 +902,8 @@ function openCategoryPrompt(latlng) {
 }
 
 async function drawRoute(start, end) {
-    currentRouteDestination = end;
     clearRoute();
+    currentRouteDestination = end;
 
     const routeCoords = [
         [start.lat, start.lng],
@@ -918,6 +925,7 @@ async function drawRoute(start, end) {
     bounds.extend([start.lat, start.lng]);
     bounds.extend([end.lat, end.lng]);
     map.fitBounds(bounds, { padding: [40, 40] });
+    setCancelRouteButtonVisible(true);
 }
 
 function refreshRouteLine(start, end) {
@@ -1136,6 +1144,12 @@ document.addEventListener('click', function(event) {
     }
 
 });
+
+if (btnCancelarRota) {
+    btnCancelarRota.addEventListener('click', () => {
+        clearRoute();
+    });
+}
 
 // Quando clicar em "Localizar-me"
 btn.addEventListener("click", () => {
