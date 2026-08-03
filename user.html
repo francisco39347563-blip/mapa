@@ -23,19 +23,27 @@
         <button id="btnLocalizar">📍 Localizar-me</button>
     </div>
 
-    <div id="infoModal" class="modal hidden">
-        <div class="modal-content">
-            <button id="closeModal" class="modal-close">×</button>
-            <div id="modalSlider" class="modal-slider hidden">
-                <button id="sliderPrev" type="button" class="slider-button">‹</button>
+    <div id="infoModal" class="modal info-modal hidden">
+        <div class="modal-content info-modal-card">
+            <button id="closeModal" class="modal-close info-modal-close" type="button" aria-label="Fechar">×</button>
+            <div id="modalSlider" class="info-modal-media hidden">
                 <div class="slider-frame">
                     <img id="sliderImage" src="" alt="Foto do local">
+                    <button id="sliderPrev" type="button" class="slider-button slider-button-prev" aria-label="Foto anterior">‹</button>
+                    <button id="sliderNext" type="button" class="slider-button slider-button-next" aria-label="Próxima foto">›</button>
+                    <div id="sliderCounter" class="slider-counter"></div>
+                    <span class="slider-hint">Toque para ampliar</span>
                 </div>
-                <button id="sliderNext" type="button" class="slider-button">›</button>
             </div>
-            <div id="sliderCounter" class="slider-counter"></div>
-            <h3 id="modalTitle"></h3>
-            <p id="modalDescription"></p>
+            <div class="info-modal-body">
+                <p class="info-modal-kicker">Local no mapa</p>
+                <h3 id="modalTitle"></h3>
+                <div class="info-modal-divider"></div>
+                <p id="modalDescription"></p>
+                <div class="modal-actions info-modal-actions">
+                    <button type="button" id="closeInfoModalButton">Fechar</button>
+                </div>
+            </div>
         </div>
     </div>
     <div id="imageViewer" class="image-viewer hidden">

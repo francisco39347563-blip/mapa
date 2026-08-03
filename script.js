@@ -19,6 +19,7 @@ const sliderNext = document.getElementById("sliderNext");
 const sliderImage = document.getElementById("sliderImage");
 const sliderCounter = document.getElementById("sliderCounter");
 const closeModalButton = document.getElementById("closeModal");
+const closeInfoModalButton = document.getElementById("closeInfoModalButton");
 const imageViewer = document.getElementById("imageViewer");
 const closeViewerButton = document.getElementById("closeViewer");
 const viewerImage = document.getElementById("viewerImage");
@@ -1031,7 +1032,14 @@ async function routeToMarker(markerId, name, fallbackLat, fallbackLng) {
 }
 
 function renderModalSlider() {
-    if (!modalPhotos || modalPhotos.length === 0) {
+    const infoCard = infoModal.querySelector('.info-modal-card');
+    const hasPhotos = modalPhotos && modalPhotos.length > 0;
+
+    if (infoCard) {
+        infoCard.classList.toggle('info-modal-card--text-only', !hasPhotos);
+    }
+
+    if (!hasPhotos) {
         modalSlider.classList.add('hidden');
         sliderCounter.textContent = '';
         return;
@@ -1041,7 +1049,11 @@ function renderModalSlider() {
     const photo = modalPhotos[modalPhotoIndex];
     sliderImage.src = photo.referencia;
     sliderImage.alt = `Foto de ${modalTitle.textContent}`;
-    sliderCounter.textContent = `Imagem ${modalPhotoIndex + 1} de ${modalPhotos.length}`;
+    sliderCounter.textContent = `${modalPhotoIndex + 1} / ${modalPhotos.length}`;
+
+    const showNav = modalPhotos.length > 1;
+    sliderPrev.style.display = showNav ? '' : 'none';
+    sliderNext.style.display = showNav ? '' : 'none';
 }
 
 function openModal(nome, descricao, photos = []) {
@@ -1071,6 +1083,9 @@ sliderNext.addEventListener('click', () => {
 });
 
 closeModalButton.addEventListener('click', closeModal);
+if (closeInfoModalButton) {
+    closeInfoModalButton.addEventListener('click', closeModal);
+}
 infoModal.addEventListener('click', function(event) {
     if (event.target === infoModal) {
         closeModal();
