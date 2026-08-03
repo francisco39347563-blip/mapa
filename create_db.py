@@ -24,15 +24,36 @@ CREATE TABLE IF NOT EXISTS fotos (
 );
 '''
 
+CREATE_TRILHAS_SQL = '''
+CREATE TABLE IF NOT EXISTS trilhas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_trilha TEXT NOT NULL,
+    cor TEXT NOT NULL
+);
+'''
+
+CREATE_PONTOS_SQL = '''
+CREATE TABLE IF NOT EXISTS pontos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_trilha INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    ordem INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (id_trilha) REFERENCES trilhas(id) ON DELETE CASCADE
+);
+'''
+
 def create_database(path: str = DB_PATH) -> None:
-    """Create the SQLite database and the mapa and fotos tables."""
+    """Create the SQLite database and required tables."""
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
     cursor.execute(CREATE_TABLE_SQL)
     cursor.execute(CREATE_PHOTOS_SQL)
+    cursor.execute(CREATE_TRILHAS_SQL)
+    cursor.execute(CREATE_PONTOS_SQL)
     connection.commit()
     connection.close()
-    print(f"Banco de dados criado em '{path}' com as tabelas 'mapa' e 'fotos'.")
+    print(f"Banco de dados criado em '{path}' com as tabelas 'mapa', 'fotos', 'trilhas' e 'pontos'.")
 
 
 if __name__ == '__main__':

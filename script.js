@@ -33,6 +33,25 @@ const imageInput = document.getElementById("imageInput");
 const imagePreview = document.getElementById("imagePreview");
 const cancelMarkerButton = document.getElementById("cancelMarkerButton");
 
+const btnModoTrilha = document.getElementById("btnModoTrilha");
+const btnDesfazerPonto = document.getElementById("btnDesfazerPonto");
+const btnSalvarTrilha = document.getElementById("btnSalvarTrilha");
+const btnCancelarTrilha = document.getElementById("btnCancelarTrilha");
+const trilhaFormModal = document.getElementById("trilhaFormModal");
+const trilhaForm = document.getElementById("trilhaForm");
+const trilhaNameInput = document.getElementById("trilhaName");
+const trilhaColorInput = document.getElementById("trilhaColor");
+const trilhaPointsCount = document.getElementById("trilhaPointsCount");
+const cancelTrilhaButton = document.getElementById("cancelTrilhaButton");
+const closeTrilhaFormModal = document.getElementById("closeTrilhaFormModal");
+const trilhaSelect = document.getElementById("trilhaSelect");
+const trilhaSelectModal = document.getElementById("trilhaSelectModal");
+const btnAbrirTrilhas = document.getElementById("btnAbrirTrilhas");
+const applyTrilhaSelectButton = document.getElementById("applyTrilhaSelectButton");
+const cancelTrilhaSelectButton = document.getElementById("cancelTrilhaSelectButton");
+const closeTrilhaSelectModal = document.getElementById("closeTrilhaSelectModal");
+const mapControls = document.getElementById("mapControls");
+
 let map;          // mapa global
 let userMarker = null;
 let userCoords = null;
@@ -47,6 +66,20 @@ let modalPhotos = [];
 let modalPhotoIndex = 0;
 let hoveredMapLatLng = null;
 let suppressNextMapClick = false;
+
+let trailMode = false;
+let draftTrailPoints = [];
+let draftTrailMarkers = [];
+let draftTrailLine = null;
+let trailLayers = [];
+let trilhasCatalog = [];
+let selectedTrilhaId = null;
+const draftTrailIcon = L.divIcon({
+    className: 'category-div-icon',
+    html: '•',
+    iconSize: [12, 12],
+    iconAnchor: [6, 6]
+});
 
 // Ícones personalizados
 const userIcon = L.icon({
@@ -402,6 +435,286 @@ async function loadMarkers() {
         });
     } catch (error) {
         console.error('Erro ao carregar marcadores:', error);
+    }
+}
+
+function clearTrailLayers() {
+    trailLayers.forEach((layer) => map.removeLayer(layer));
+    trailLayers = [];
+}
+
+function drawTrilhaOnMap(trilha) {
+    const coords = (trilha.pontos || []).map((ponto) => [ponto.latitude, ponto.longitude]);
+    if (coords.length < 2) return;
+
+    const line = L.polyline(coords, {
+        color: trilha.cor || '#e67e22',
+        weight: 5,
+        opacity: 0.9
+    }).addTo(map);
+    line.bindPopup(`<b>${escapeHtml(trilha.nome_trilha)}</b>`);
+    trailLayers.push(line);
+}
+
+function syncTrilhaSelect() {
+    if (!trilhaSelect) return;
+
+    const previousValue = selectedTrilhaId == null ? '' : String(selectedTrilhaId);
+    trilhaSelect.innerHTML = '';
+
+    const noneOption = document.createElement('option');
+    noneOption.value = '';
+    noneOption.textContent = 'Nenhuma';
+    trilhaSelect.appendChild(noneOption);
+
+    trilhasCatalog.forEach((trilha) => {
+        const option = document.createElement('option');
+        option.value = String(trilha.id);
+        option.textContent = trilha.nome_trilha;
+        trilhaSelect.appendChild(option);
+    });
+
+    const stillExists = previousValue !== ''
+        && trilhasCatalog.some((trilha) => String(trilha.id) === previousValue);
+    trilhaSelect.value = stillExists ? previousValue : '';
+    selectedTrilhaId = trilhaSelect.value ? Number(trilhaSelect.value) : null;
+}
+
+function showSelectedTrilha() {
+    clearTrailLayers();
+    if (selectedTrilhaId == null) return;
+
+    const trilha = trilhasCatalog.find((item) => item.id === selectedTrilhaId);
+    if (!trilha) return;
+    drawTrilhaOnMap(trilha);
+}
+
+function setSelectedTrilha(trilhaId, options = {}) {
+    const { fitBounds = false } = options;
+    selectedTrilhaId = trilhaId == null || trilhaId === '' ? null : Number(trilhaId);
+    if (trilhaSelect) {
+        trilhaSelect.value = selectedTrilhaId == null ? '' : String(selectedTrilhaId);
+    }
+    showSelectedTrilha();
+
+    if (fitBounds && selectedTrilhaId != null && trailLayers.length > 0) {
+        map.fitBounds(trailLayers[0].getBounds(), { padding: [40, 40] });
+    }
+}
+
+function openTrilhaSelectModal() {
+    if (!trilhaSelectModal) return;
+    syncTrilhaSelect();
+    trilhaSelectModal.classList.remove('hidden');
+}
+
+function closeTrilhaSelectModalFn() {
+    if (!trilhaSelectModal) return;
+    trilhaSelectModal.classList.add('hidden');
+    if (trilhaSelect) {
+        trilhaSelect.value = selectedTrilhaId == null ? '' : String(selectedTrilhaId);
+    }
+}
+
+async function loadTrilhas(options = {}) {
+    const { preferTrilhaId = null } = options;
+    try {
+        const response = await fetch('/api/trilhas');
+        if (!response.ok) throw new Error(response.statusText);
+        trilhasCatalog = await response.json();
+        syncTrilhaSelect();
+
+        if (preferTrilhaId != null) {
+            setSelectedTrilha(preferTrilhaId, { fitBounds: true });
+        } else {
+            showSelectedTrilha();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar trilhas:', error);
+    }
+}
+
+if (btnAbrirTrilhas) {
+    btnAbrirTrilhas.addEventListener('click', openTrilhaSelectModal);
+}
+
+if (applyTrilhaSelectButton) {
+    applyTrilhaSelectButton.addEventListener('click', () => {
+        const value = trilhaSelect ? trilhaSelect.value : '';
+        setSelectedTrilha(value, { fitBounds: Boolean(value) });
+        closeTrilhaSelectModalFn();
+    });
+}
+
+if (cancelTrilhaSelectButton) {
+    cancelTrilhaSelectButton.addEventListener('click', closeTrilhaSelectModalFn);
+}
+
+if (closeTrilhaSelectModal) {
+    closeTrilhaSelectModal.addEventListener('click', closeTrilhaSelectModalFn);
+}
+
+if (trilhaSelectModal) {
+    trilhaSelectModal.addEventListener('click', (event) => {
+        if (event.target === trilhaSelectModal) {
+            closeTrilhaSelectModalFn();
+        }
+    });
+}
+
+function updateDraftTrailVisual() {
+    draftTrailMarkers.forEach((marker) => map.removeLayer(marker));
+    draftTrailMarkers = [];
+
+    if (draftTrailLine) {
+        map.removeLayer(draftTrailLine);
+        draftTrailLine = null;
+    }
+
+    draftTrailPoints.forEach((point) => {
+        const marker = L.marker([point.lat, point.lng], { icon: draftTrailIcon }).addTo(map);
+        draftTrailMarkers.push(marker);
+    });
+
+    if (draftTrailPoints.length >= 2) {
+        const coords = draftTrailPoints.map((point) => [point.lat, point.lng]);
+        const color = trilhaColorInput ? trilhaColorInput.value : '#e67e22';
+        draftTrailLine = L.polyline(coords, {
+            color,
+            weight: 4,
+            opacity: 0.85,
+            dashArray: '6,8'
+        }).addTo(map);
+    }
+
+    if (trilhaPointsCount) {
+        trilhaPointsCount.textContent = `${draftTrailPoints.length} ponto${draftTrailPoints.length === 1 ? '' : 's'} demarcado${draftTrailPoints.length === 1 ? '' : 's'}`;
+    }
+
+    if (btnDesfazerPonto) {
+        btnDesfazerPonto.classList.toggle('hidden', !trailMode || draftTrailPoints.length === 0);
+    }
+    if (btnSalvarTrilha) {
+        btnSalvarTrilha.classList.toggle('hidden', !trailMode || draftTrailPoints.length < 2);
+    }
+    if (btnCancelarTrilha) {
+        btnCancelarTrilha.classList.toggle('hidden', !trailMode);
+    }
+}
+
+function clearDraftTrail() {
+    draftTrailPoints = [];
+    updateDraftTrailVisual();
+}
+
+function setTrailMode(enabled) {
+    trailMode = enabled;
+    if (btnModoTrilha) {
+        btnModoTrilha.classList.toggle('active', trailMode);
+        btnModoTrilha.textContent = trailMode ? 'Desenhando…' : 'Criar trilha';
+    }
+    if (!trailMode) {
+        clearDraftTrail();
+    } else {
+        updateDraftTrailVisual();
+    }
+}
+
+function addDraftTrailPoint(latlng) {
+    draftTrailPoints.push({ lat: latlng.lat, lng: latlng.lng });
+    updateDraftTrailVisual();
+}
+
+function undoDraftTrailPoint() {
+    draftTrailPoints.pop();
+    updateDraftTrailVisual();
+}
+
+function openTrilhaFormModal() {
+    if (!trilhaFormModal) return;
+    if (draftTrailPoints.length < 2) {
+        alert('Demarque pelo menos 2 pontos para criar uma trilha.');
+        return;
+    }
+    if (trilhaPointsCount) {
+        trilhaPointsCount.textContent = `${draftTrailPoints.length} pontos demarcados`;
+    }
+    trilhaFormModal.classList.remove('hidden');
+    if (trilhaNameInput) trilhaNameInput.focus();
+}
+
+function closeTrilhaFormModalFn() {
+    if (!trilhaFormModal) return;
+    trilhaFormModal.classList.add('hidden');
+    if (trilhaForm) trilhaForm.reset();
+    if (trilhaColorInput) trilhaColorInput.value = '#e67e22';
+    updateDraftTrailVisual();
+}
+
+async function saveTrilha(nomeTrilha, cor) {
+    const payload = {
+        nome_trilha: nomeTrilha,
+        cor,
+        pontos: draftTrailPoints.map((point, index) => ({
+            latitude: point.lat,
+            longitude: point.lng,
+            ordem: index
+        }))
+    };
+
+    const response = await fetch('/api/trilhas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || response.statusText);
+    }
+    return response.json();
+}
+
+if (isAdmin && btnModoTrilha) {
+    btnModoTrilha.classList.remove('hidden');
+
+    btnModoTrilha.addEventListener('click', () => {
+        setTrailMode(!trailMode);
+    });
+
+    if (btnDesfazerPonto) {
+        btnDesfazerPonto.addEventListener('click', undoDraftTrailPoint);
+    }
+    if (btnSalvarTrilha) {
+        btnSalvarTrilha.addEventListener('click', openTrilhaFormModal);
+    }
+    if (btnCancelarTrilha) {
+        btnCancelarTrilha.addEventListener('click', () => setTrailMode(false));
+    }
+    if (cancelTrilhaButton) {
+        cancelTrilhaButton.addEventListener('click', closeTrilhaFormModalFn);
+    }
+    if (closeTrilhaFormModal) {
+        closeTrilhaFormModal.addEventListener('click', closeTrilhaFormModalFn);
+    }
+    if (trilhaForm) {
+        trilhaForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const nome = trilhaNameInput.value.trim();
+            const cor = trilhaColorInput.value || '#e67e22';
+            if (!nome) {
+                alert('Informe o nome da trilha.');
+                return;
+            }
+            try {
+                const trilha = await saveTrilha(nome, cor);
+                closeTrilhaFormModalFn();
+                setTrailMode(false);
+                await loadTrilhas({ preferTrilhaId: trilha.id });
+            } catch (error) {
+                console.error('Erro ao salvar trilha:', error);
+                alert(error.message || 'Não foi possível salvar a trilha.');
+            }
+        });
     }
 }
 
@@ -848,6 +1161,9 @@ function iniciarMapa(lat, lng) {
     // Esconder tela inicial e mostrar mapa
     telaInicial.style.display = "none";
     mapDiv.style.display = "block";
+    if (mapControls) {
+        mapControls.classList.remove('hidden');
+    }
 
     // Criar mapa
     map = L.map('map', { doubleClickZoom: false }).setView([lat, lng], 15);
@@ -863,6 +1179,7 @@ function iniciarMapa(lat, lng) {
         .bindPopup("INPE - Instituto Nacional de Pesquisas Espaciais");
 
     loadMarkers();
+    loadTrilhas();
 
     // Atualizar posição do usuário em tempo real
     if (navigator.geolocation) {
@@ -906,7 +1223,7 @@ function iniciarMapa(lat, lng) {
         );
     }
 
-    // Modo administrador: adicionar marcadores clicando
+    // Modo administrador: adicionar marcadores ou demarcar trilhas
     if (isAdmin) {
         map.on('mousemove', function(e) {
             hoveredMapLatLng = e.latlng;
@@ -917,6 +1234,10 @@ function iniciarMapa(lat, lng) {
         map.on('click', function(e) {
             if (suppressNextMapClick) {
                 suppressNextMapClick = false;
+                return;
+            }
+            if (trailMode) {
+                addDraftTrailPoint(e.latlng);
                 return;
             }
             openCategoryPrompt(e.latlng);

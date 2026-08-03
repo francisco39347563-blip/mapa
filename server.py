@@ -30,8 +30,23 @@ CREATE TABLE IF NOT EXISTS fotos (
 );
 '''
 
-CREATE_ROUTES_SQL = '''
--- Tabela rotas removida (rota agora é 100% via API no frontend).
+CREATE_TRILHAS_SQL = '''
+CREATE TABLE IF NOT EXISTS trilhas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_trilha TEXT NOT NULL,
+    cor TEXT NOT NULL
+);
+'''
+
+CREATE_PONTOS_SQL = '''
+CREATE TABLE IF NOT EXISTS pontos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_trilha INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    ordem INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (id_trilha) REFERENCES trilhas(id) ON DELETE CASCADE
+);
 '''
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -41,8 +56,11 @@ def init_db():
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     cursor = connection.cursor()
+    cursor.execute('PRAGMA foreign_keys = ON')
     cursor.execute(CREATE_TABLE_SQL)
     cursor.execute(CREATE_PHOTOS_SQL)
+    cursor.execute(CREATE_TRILHAS_SQL)
+    cursor.execute(CREATE_PONTOS_SQL)
     connection.commit()
     connection.close()
 
@@ -50,7 +68,45 @@ def init_db():
 def get_db_connection():
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
+    connection.execute('PRAGMA foreign_keys = ON')
     return connection
+
+
+def fetch_trilhas(connection, trilha_id=None):
+    cursor = connection.cursor()
+    if trilha_id is None:
+        cursor.execute('SELECT id, nome_trilha, cor FROM trilhas ORDER BY id')
+    else:
+        cursor.execute(
+            'SELECT id, nome_trilha, cor FROM trilhas WHERE id = ?',
+            (trilha_id,)
+        )
+    trilha_rows = cursor.fetchall()
+    if not trilha_rows:
+        return []
+
+    ids = [row['id'] for row in trilha_rows]
+    placeholders = ','.join('?' * len(ids))
+    cursor.execute(
+        f'''
+        SELECT id, id_trilha, latitude, longitude, ordem
+        FROM pontos
+        WHERE id_trilha IN ({placeholders})
+        ORDER BY id_trilha, ordem, id
+        ''',
+        ids
+    )
+    pontos_by_trilha = {}
+    for row in cursor.fetchall():
+        ponto = dict(row)
+        pontos_by_trilha.setdefault(ponto['id_trilha'], []).append(ponto)
+
+    trilhas = []
+    for row in trilha_rows:
+        trilha = dict(row)
+        trilha['pontos'] = pontos_by_trilha.get(trilha['id'], [])
+        trilhas.append(trilha)
+    return trilhas
 
 
 @app.route('/')
@@ -182,6 +238,89 @@ def get_marker_photos(marker_id):
     connection.close()
     photos = [dict(row) for row in rows]
     return jsonify(photos)
+
+
+@app.route('/api/trilhas', methods=['GET'])
+def get_trilhas():
+    connection = get_db_connection()
+    trilhas = fetch_trilhas(connection)
+    connection.close()
+    return jsonify(trilhas)
+
+
+@app.route('/api/trilhas/<int:trilha_id>', methods=['GET'])
+def get_trilha(trilha_id):
+    connection = get_db_connection()
+    trilhas = fetch_trilhas(connection, trilha_id=trilha_id)
+    connection.close()
+    if not trilhas:
+        return jsonify({'error': 'Trilha não encontrada'}), 404
+    return jsonify(trilhas[0])
+
+
+@app.route('/api/trilhas', methods=['POST'])
+def create_trilha():
+    data = request.get_json() or {}
+    nome_trilha = (data.get('nome_trilha') or '').strip()
+    cor = (data.get('cor') or '').strip() or '#e67e22'
+    pontos = data.get('pontos')
+
+    if not nome_trilha:
+        return jsonify({'error': 'nome_trilha é obrigatório'}), 400
+    if not isinstance(pontos, list) or len(pontos) < 2:
+        return jsonify({'error': 'É necessário pelo menos 2 pontos'}), 400
+
+    normalized_pontos = []
+    for index, ponto in enumerate(pontos):
+        try:
+            latitude = float(ponto['latitude'])
+            longitude = float(ponto['longitude'])
+        except (KeyError, TypeError, ValueError):
+            return jsonify({'error': f'Ponto inválido no índice {index}'}), 400
+        ordem = ponto.get('ordem', index)
+        try:
+            ordem = int(ordem)
+        except (TypeError, ValueError):
+            ordem = index
+        normalized_pontos.append((latitude, longitude, ordem))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            'INSERT INTO trilhas (nome_trilha, cor) VALUES (?, ?)',
+            (nome_trilha, cor)
+        )
+        trilha_id = cursor.lastrowid
+        cursor.executemany(
+            'INSERT INTO pontos (id_trilha, latitude, longitude, ordem) VALUES (?, ?, ?, ?)',
+            [(trilha_id, lat, lng, ordem) for lat, lng, ordem in normalized_pontos]
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        connection.close()
+        return jsonify({'error': 'Não foi possível salvar a trilha'}), 500
+
+    trilhas = fetch_trilhas(connection, trilha_id=trilha_id)
+    connection.close()
+    return jsonify(trilhas[0]), 201
+
+
+@app.route('/api/trilhas/<int:trilha_id>', methods=['DELETE'])
+def delete_trilha(trilha_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT id FROM trilhas WHERE id = ?', (trilha_id,))
+    if cursor.fetchone() is None:
+        connection.close()
+        return jsonify({'error': 'Trilha não encontrada'}), 404
+
+    cursor.execute('DELETE FROM pontos WHERE id_trilha = ?', (trilha_id,))
+    cursor.execute('DELETE FROM trilhas WHERE id = ?', (trilha_id,))
+    connection.commit()
+    connection.close()
+    return jsonify({'ok': True})
 
 
 @app.route('/<path:path>')

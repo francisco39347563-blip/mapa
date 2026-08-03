@@ -45,8 +45,28 @@
         </div>
     </div>
 
+    <div id="trilhaSelectModal" class="modal hidden">
+        <div class="modal-content modal-content-compact">
+            <button id="closeTrilhaSelectModal" class="modal-close" type="button">×</button>
+            <h3>Trilha no mapa</h3>
+            <p class="form-hint">Escolha uma trilha para exibir. Somente uma pode aparecer por vez.</p>
+            <label>Trilha
+                <select id="trilhaSelect">
+                    <option value="">Nenhuma</option>
+                </select>
+            </label>
+            <div class="modal-actions">
+                <button type="button" id="cancelTrilhaSelectButton">Fechar</button>
+                <button type="button" id="applyTrilhaSelectButton">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="map"></div>
-    <button id="btnCentralizar" class="map-control" title="Centralizar na minha posição">⦿</button>
+    <div id="mapControls" class="map-controls hidden">
+        <button id="btnAbrirTrilhas" class="map-control map-control-wide" type="button" title="Escolher trilha no mapa">Trilhas</button>
+        <button id="btnCentralizar" class="map-control" title="Centralizar na minha posição">⦿</button>
+    </div>
 
     <script>window.USER_MODE = 'viewer';</script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

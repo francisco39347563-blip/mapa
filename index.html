@@ -76,8 +76,52 @@
         </div>
     </div>
 
+    <div id="trilhaFormModal" class="modal hidden">
+        <div class="modal-content">
+            <button id="closeTrilhaFormModal" class="modal-close">×</button>
+            <h3>Nova trilha</h3>
+            <form id="trilhaForm">
+                <label>Nome da trilha
+                    <input type="text" id="trilhaName" required>
+                </label>
+                <label>Cor
+                    <input type="color" id="trilhaColor" value="#e67e22">
+                </label>
+                <p id="trilhaPointsCount" class="form-hint">0 pontos demarcados</p>
+                <div class="modal-actions">
+                    <button type="button" id="cancelTrilhaButton">Cancelar</button>
+                    <button type="submit">Salvar trilha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="trilhaSelectModal" class="modal hidden">
+        <div class="modal-content modal-content-compact">
+            <button id="closeTrilhaSelectModal" class="modal-close" type="button">×</button>
+            <h3>Trilha no mapa</h3>
+            <p class="form-hint">Escolha uma trilha para exibir. Somente uma pode aparecer por vez.</p>
+            <label>Trilha
+                <select id="trilhaSelect">
+                    <option value="">Nenhuma</option>
+                </select>
+            </label>
+            <div class="modal-actions">
+                <button type="button" id="cancelTrilhaSelectButton">Fechar</button>
+                <button type="button" id="applyTrilhaSelectButton">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="map"></div>
-    <button id="btnCentralizar" class="map-control" title="Centralizar na minha posição">⦿</button>
+    <div id="mapControls" class="map-controls hidden">
+        <button id="btnAbrirTrilhas" class="map-control map-control-wide" type="button" title="Escolher trilha no mapa">Trilhas</button>
+        <button id="btnModoTrilha" class="map-control map-control-wide hidden" type="button" title="Alternar modo trilha">Criar trilha</button>
+        <button id="btnDesfazerPonto" class="map-control map-control-wide hidden" type="button" title="Remover último ponto">Desfazer</button>
+        <button id="btnSalvarTrilha" class="map-control map-control-wide hidden" type="button" title="Salvar trilha">Salvar</button>
+        <button id="btnCancelarTrilha" class="map-control map-control-wide hidden" type="button" title="Cancelar trilha">Cancelar</button>
+        <button id="btnCentralizar" class="map-control" title="Centralizar na minha posição">⦿</button>
+    </div>
 
     <!-- Leaflet JS -->
     <script>window.USER_MODE = 'admin';</script>
